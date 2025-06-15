@@ -5,3 +5,4 @@ Flask-SQLAlchemy
 Flask-Migrate
 markdown2
 bleach
+markdown
