@@ -6,11 +6,9 @@
 
 <div class="row">
     <div class="col-md-4">
-        {% if book.cover %}
-            <img src="{{ url_for('static', filename='uploads/cover_' ~ book.cover.id) }}" alt="Обложка" class="img-fluid rounded">
-        {% else %}
-            <div class="text-muted">Обложка отсутствует</div>
-        {% endif %}
+        <img src="{{ url_for('static', filename='uploads/cover_' ~ book.cover.id) if book.cover else url_for('static', filename='uploads/no-image-large.jpg') }}"
+             alt="Обложка"
+             class="img-fluid rounded">
     </div>
     <div class="col-md-8">
         <p><strong>Автор:</strong> {{ book.author }}</p>
@@ -32,10 +30,21 @@
             {% endif %}
         </p>
 
-        {% if current_user.is_authenticated and current_user.role.name == 'пользователь' %}
-        <button class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#addToCollectionModal">
-            Добавить в подборку
-        </button>
+        {% if current_user.is_authenticated %}
+            {% if current_user.role.name == 'пользователь' %}
+                <button class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#addToCollectionModal">
+                    Добавить в подборку
+                </button>
+            {% endif %}
+
+            {% if current_user.role.name in ['пользователь', 'модератор', 'администратор'] %}
+                {% set has_review = book.reviews | selectattr("user_id", "equalto", current_user.id) | list %}
+                {% if not has_review %}
+                    <a href="{{ url_for('reviews.add_review', book_id=book.id) }}" class="btn btn-success mt-3 ms-2">
+                        Оставить рецензию
+                    </a>
+                {% endif %}
+            {% endif %}
         {% endif %}
     </div>
 </div>

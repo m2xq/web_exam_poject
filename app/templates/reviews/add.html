@@ -1,25 +1,40 @@
 {% extends 'base.html' %}
 {% block title %}Рецензия{% endblock %}
+
 {% block content %}
-<h2>Оставить рецензию для книги: {{ book.title }}</h2>
+<h2 class="mb-4">Оставить рецензию для книги: <em>{{ book.title }}</em></h2>
 
 <form method="POST">
     {{ form.hidden_tag() }}
-    
+
     <div class="mb-3">
         {{ form.rating.label(class="form-label") }}
         {{ form.rating(class="form-select") }}
+        {% if form.rating.errors %}
+            <div class="text-danger small">
+                {{ form.rating.errors[0] }}
+            </div>
+        {% endif %}
     </div>
-    
+
     <div class="mb-3">
         {{ form.text.label(class="form-label") }}
         {{ form.text(class="form-control", id="mde") }}
+        {% if form.text.errors %}
+            <div class="text-danger small">
+                {{ form.text.errors[0] }}
+            </div>
+        {% endif %}
     </div>
-    
+
     <button type="submit" class="btn btn-primary">Сохранить</button>
+    <a href="{{ url_for('books.view', id=book.id) }}" class="btn btn-secondary ms-2">Назад</a>
 </form>
 
 <script>
-    new EasyMDE({ element: document.getElementById("mde") });
+    const mdeElement = document.getElementById("mde");
+    if (mdeElement) {
+        new EasyMDE({ element: mdeElement });
+    }
 </script>
 {% endblock %}

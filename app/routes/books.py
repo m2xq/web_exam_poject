@@ -4,20 +4,19 @@ from werkzeug.utils import secure_filename
 from app.models import db, Book, Genre, Cover
 from app.forms import BookForm
 import os, hashlib
-import markdown  # ✅ Для рендеринга Markdown
+import markdown
 
 bp = Blueprint('books', __name__)
 
 @bp.route('/')
 def index():
     page = request.args.get('page', 1, type=int)
-    books = Book.query.order_by(Book.year.desc()).paginate(page=page, per_page=10)
+    books = Book.query.order_by(Book.year.desc()).paginate(page=page, per_page=6, error_out=False)
     return render_template('books/index.html', books=books)
 
 @bp.route('/book/<int:id>')
 def view(id):
     book = Book.query.get_or_404(id)
-    # ✅ Рендерим Markdown в HTML для описания
     book.description_html = markdown.markdown(book.description or "")
     return render_template('books/view.html', book=book)
 
@@ -44,7 +43,7 @@ def add():
                 genres=[Genre.query.get(id) for id in form.genres.data]
             )
             db.session.add(book)
-            db.session.flush()  # Нужен ID для обложки
+            db.session.flush()
 
             file = form.cover.data
             if file:
@@ -55,15 +54,12 @@ def add():
                     book.cover = existing
                 else:
                     filename = secure_filename(file.filename)
-                    new_cover = Cover(
-                        filename=filename,
-                        mimetype=file.mimetype,
-                        md5_hash=md5
-                    )
+                    new_cover = Cover(filename=filename, mimetype=file.mimetype, md5_hash=md5)
                     db.session.add(new_cover)
                     db.session.flush()
 
-                    upload_folder = current_app.config['UPLOAD_FOLDER']
+                    # Сохраняем в app/static/uploads
+                    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
                     os.makedirs(upload_folder, exist_ok=True)
                     file_path = os.path.join(upload_folder, f"cover_{new_cover.id}")
                     with open(file_path, 'wb') as f:
@@ -77,10 +73,11 @@ def add():
 
         except Exception as e:
             db.session.rollback()
+            current_app.logger.exception("Ошибка при добавлении книги")
             flash(f"Ошибка при сохранении книги: {str(e)}", "danger")
 
     else:
-        print("❌ Ошибки валидации формы:", form.errors)
+        current_app.logger.warning("Форма не прошла валидацию: %s", form.errors)
         flash("Форма содержит ошибки. Проверьте данные.", "danger")
 
     return render_template('books/add_edit.html', form=form, editing=False)
@@ -116,6 +113,7 @@ def edit(id):
 
         except Exception as e:
             db.session.rollback()
+            current_app.logger.exception("Ошибка при обновлении книги")
             flash(f"Ошибка при обновлении: {str(e)}", "danger")
 
     return render_template('books/add_edit.html', form=form, editing=True)
@@ -128,13 +126,15 @@ def delete(id):
         return redirect(url_for('books.index'))
 
     book = Book.query.get_or_404(id)
+    cover = book.cover
     try:
-        cover = book.cover
         db.session.delete(book)
         db.session.commit()
 
+        # Если обложка больше не используется — удалим и файл, и запись
         if cover and not Book.query.filter_by(cover_id=cover.id).first():
-            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"cover_{cover.id}")
+            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
+            file_path = os.path.join(upload_folder, f"cover_{cover.id}")
             if os.path.exists(file_path):
                 os.remove(file_path)
             db.session.delete(cover)
@@ -143,6 +143,7 @@ def delete(id):
         flash("Книга удалена.", "success")
     except Exception as e:
         db.session.rollback()
+        current_app.logger.exception("Ошибка при удалении книги")
         flash(f"Ошибка при удалении: {str(e)}", "danger")
 
     return redirect(url_for('books.index'))

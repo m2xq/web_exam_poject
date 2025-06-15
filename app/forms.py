@@ -55,3 +55,4 @@ class ReviewForm(FlaskForm):
         DataRequired(), Length(min=10)
     ])
     submit = SubmitField("Сохранить")
+

@@ -4,21 +4,91 @@
 {% block content %}
 <h2>{{ 'Редактировать' if editing else 'Добавить' }} книгу</h2>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{# ✅ Показываем отладочную информацию — все ошибки формы #}
+{% if form.errors %}
+  <div class="alert alert-danger">
+    <strong>Ошибки валидации формы:</strong>
+    <pre>{{ form.errors | tojson(indent=2) }}</pre>
+  </div>
+{% endif %}
+
 <form method="POST" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
 
-    <div class="mb-3">{{ form.title.label(class="form-label") }}{{ form.title(class="form-control") }}</div>
-    <div class="mb-3">{{ form.description.label(class="form-label") }}{{ form.description(class="form-control", id="description") }}</div>
-    <div class="mb-3">{{ form.year.label(class="form-label") }}{{ form.year(class="form-control") }}</div>
-    <div class="mb-3">{{ form.publisher.label(class="form-label") }}{{ form.publisher(class="form-control") }}</div>
-    <div class="mb-3">{{ form.author.label(class="form-label") }}{{ form.author(class="form-control") }}</div>
-    <div class="mb-3">{{ form.pages.label(class="form-label") }}{{ form.pages(class="form-control") }}</div>
-    <div class="mb-3">{{ form.genres.label(class="form-label") }}{{ form.genres(class="form-select", multiple=True) }}</div>
+    <div class="mb-3">
+        {{ form.title.label(class="form-label") }}
+        {{ form.title(class="form-control", placeholder="Введите название") }}
+        {% for error in form.title.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.description.label(class="form-label") }}
+        {{ form.description(class="form-control", id="description") }}
+        {% for error in form.description.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.year.label(class="form-label") }}
+        {{ form.year(class="form-control") }}
+        {% for error in form.year.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.publisher.label(class="form-label") }}
+        {{ form.publisher(class="form-control") }}
+        {% for error in form.publisher.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.author.label(class="form-label") }}
+        {{ form.author(class="form-control") }}
+        {% for error in form.author.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.pages.label(class="form-label") }}
+        {{ form.pages(class="form-control") }}
+        {% for error in form.pages.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.genres.label(class="form-label") }}
+        {{ form.genres(class="form-select", multiple=True) }}
+        {% for error in form.genres.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
 
     {% if not editing %}
     <div class="mb-3">
         {{ form.cover.label(class="form-label") }}
         {{ form.cover(class="form-control", id="coverInput") }}
+        {% for error in form.cover.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
         <div id="coverPreview" class="mt-2" style="display: none;">
             <p class="small text-muted">Предпросмотр обложки:</p>
             <img id="coverImage" src="#" alt="Preview" class="img-thumbnail" style="max-height: 200px;">

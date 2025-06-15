@@ -2,24 +2,28 @@
 {% block title %}Список книг{% endblock %}
 
 {% block content %}
-<h1>Список книг</h1>
+<h1 class="mb-4">Список книг</h1>
 
-<div class="row">
+<div class="row row-cols-1 row-cols-md-2 g-4">
     {% for book in books.items %}
-    <div class="col-md-6 mb-3">
-        <div class="card">
+    <div class="col">
+        <div class="card h-100">
+            <img src="{{ url_for('static', filename=( 'uploads/cover_' ~ book.cover.id ) if book.cover else 'uploads/no-image-large.jpg') }}"
+                 class="card-img-top book-cover"
+                 alt="Обложка книги">
+
             <div class="card-body">
                 <h5 class="card-title">{{ book.title }}</h5>
-                <p class="card-text">Автор: {{ book.author }} ({{ book.year }})</p>
-                <p class="card-text">Жанры:
+                <p class="card-text"><strong>Автор:</strong> {{ book.author }}</p>
+                <p class="card-text"><strong>Год:</strong> {{ book.year }}</p>
+                <p class="card-text"><strong>Жанры:</strong>
                     {% for genre in book.genres %}
                         <span class="badge bg-secondary">{{ genre.name }}</span>
                     {% endfor %}
                 </p>
-                <p class="card-text">
-                    Средняя оценка: {{ book.average_rating() or 'Нет' }}<br>
-                    Рецензий: {{ book.review_count() }}
-                </p>
+                <p class="card-text"><strong>Оценка:</strong> {{ book.average_rating() or 'Нет' }}</p>
+                <p class="card-text"><strong>Рецензий:</strong> {{ book.review_count() }}</p>
+
                 <a href="{{ url_for('books.view', id=book.id) }}" class="btn btn-primary">Просмотр</a>
                 {% if current_user.is_authenticated %}
                     {% if current_user.role.name in ['администратор', 'модератор'] %}
@@ -35,7 +39,32 @@
     {% endfor %}
 </div>
 
-<!-- Модалка подтверждения -->
+<!-- Пагинация -->
+<nav class="mt-4">
+  <ul class="pagination justify-content-center">
+    {% if books.has_prev %}
+      <li class="page-item"><a class="page-link" href="?page={{ books.prev_num }}">Назад</a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Назад</span></li>
+    {% endif %}
+    {% for page_num in books.iter_pages() %}
+      {% if page_num %}
+        <li class="page-item {% if page_num == books.page %}active{% endif %}">
+          <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    {% if books.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ books.next_num }}">Вперёд</a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Вперёд</span></li>
+    {% endif %}
+  </ul>
+</nav>
+
+<!-- Модальное окно удаления -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -48,6 +77,7 @@
       </div>
       <div class="modal-footer">
         <form id="deleteForm" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Нет</button>
           <button type="submit" class="btn btn-danger">Да</button>
         </form>
@@ -65,31 +95,19 @@ function confirmDelete(bookId, title) {
 }
 </script>
 
-<!-- Пагинация -->
-<nav>
-  <ul class="pagination justify-content-center">
-    {% if books.has_prev %}
-      <li class="page-item"><a class="page-link" href="?page={{ books.prev_num }}">Назад</a></li>
-    {% else %}
-      <li class="page-item disabled"><span class="page-link">Назад</span></li>
-    {% endif %}
-    {% for page_num in books.iter_pages() %}
-      {% if page_num %}
-        <li class="page-item {% if page_num == books.page %}active{% endif %}"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">…</span></li>
-      {% endif %}
-    {% endfor %}
-    {% if books.has_next %}
-      <li class="page-item"><a class="page-link" href="?page={{ books.next_num }}">Вперёд</a></li>
-    {% else %}
-      <li class="page-item disabled"><span class="page-link">Вперёд</span></li>
-    {% endif %}
-  </ul>
-</nav>
-
 <!-- Кнопка "Добавить книгу" -->
 {% if current_user.is_authenticated and current_user.role.name == 'администратор' %}
-    <a href="{{ url_for('books.add') }}" class="btn btn-success">Добавить книгу</a>
+    <div class="mt-4">
+        <a href="{{ url_for('books.add') }}" class="btn btn-success">Добавить книгу</a>
+    </div>
 {% endif %}
+
+<!-- Стили для фиксированной обложки -->
+<style>
+.book-cover {
+    height: 200px;
+    width: 100%;
+    object-fit: cover;
+}
+</style>
 {% endblock %}

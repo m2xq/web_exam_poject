@@ -2,14 +2,14 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
-from flask_wtf import CSRFProtect  # ✅ Добавлено
+from flask_wtf import CSRFProtect
 from config import Config
-from werkzeug.security import generate_password_hash
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
-csrf = CSRFProtect()  # ✅ Добавлено
+csrf = CSRFProtect()
+
 
 def create_app():
     app = Flask(__name__)
@@ -18,24 +18,25 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)
-    csrf.init_app(app)  # ✅ CSRF защита активирована
-
-    from .routes import auth, books, reviews, collections
-    app.register_blueprint(auth.bp)
-    app.register_blueprint(books.bp)
-    app.register_blueprint(reviews.bp)
-    app.register_blueprint(collections.bp)
+    csrf.init_app(app)
 
     login_manager.login_view = 'auth.login'
+
+    # Регистрация блюпринтов
+    from .routes import auth, books, reviews, collections
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(books.bp, url_prefix='/')  # ✅ ОБЯЗАТЕЛЬНО ДЛЯ /
+    app.register_blueprint(reviews.bp)
+    app.register_blueprint(collections.bp)
 
     with app.app_context():
         create_initial_data()
 
     return app
 
+
 def create_initial_data():
-    from app.models import db, Role, User, Genre
-    from werkzeug.security import generate_password_hash
+    from app.models import Role, User, Genre
 
     if not Role.query.first():
         db.session.add_all([
@@ -66,16 +67,10 @@ def create_initial_data():
         ))
 
     if not Genre.query.first():
-        default_genres = [
-            'Фантастика',
-            'Детектив',
-            'Роман',
-            'Приключения',
-            'Научная литература',
-            'Поэзия',
-            'История',
-            'Биография'
+        genres = [
+            'Фантастика', 'Детектив', 'Роман', 'Приключения',
+            'Научная литература', 'Поэзия', 'История', 'Биография'
         ]
-        db.session.add_all([Genre(name=name) for name in default_genres])
+        db.session.add_all([Genre(name=name) for name in genres])
 
     db.session.commit()
