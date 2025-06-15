@@ -1,2 +1,2 @@
 # web_exam_poject
-Web Rust
+Web Flask

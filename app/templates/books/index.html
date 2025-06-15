@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Список книг{% endblock %}
+
 {% block content %}
 <h1>Список книг</h1>
 
@@ -22,10 +23,10 @@
                 <a href="{{ url_for('books.view', id=book.id) }}" class="btn btn-primary">Просмотр</a>
                 {% if current_user.is_authenticated %}
                     {% if current_user.role.name in ['администратор', 'модератор'] %}
-                        <a href="#" class="btn btn-warning">Редактировать</a>
+                        <a href="{{ url_for('books.edit', id=book.id) }}" class="btn btn-warning">Редактировать</a>
                     {% endif %}
                     {% if current_user.role.name == 'администратор' %}
-                          <a href="#" class="btn btn-danger" onclick="confirmDelete({{ book.id }}, '{{ book.title|e }}')">Удалить</a>
+                        <button class="btn btn-danger" onclick="confirmDelete({{ book.id }}, '{{ book.title|e }}')">Удалить</button>
                     {% endif %}
                 {% endif %}
             </div>
@@ -34,6 +35,7 @@
     {% endfor %}
 </div>
 
+<!-- Модалка подтверждения -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -63,6 +65,7 @@ function confirmDelete(bookId, title) {
 }
 </script>
 
+<!-- Пагинация -->
 <nav>
   <ul class="pagination justify-content-center">
     {% if books.has_prev %}
@@ -85,6 +88,7 @@ function confirmDelete(bookId, title) {
   </ul>
 </nav>
 
+<!-- Кнопка "Добавить книгу" -->
 {% if current_user.is_authenticated and current_user.role.name == 'администратор' %}
     <a href="{{ url_for('books.add') }}" class="btn btn-success">Добавить книгу</a>
 {% endif %}

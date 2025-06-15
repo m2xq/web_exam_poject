@@ -1,38 +1,113 @@
 {% extends 'base.html' %}
 {% block title %}{{ book.title }}{% endblock %}
+
 {% block content %}
-<h1>{{ book.title }}</h1>
-<p><strong>Автор:</strong> {{ book.author }}</p>
-<p><strong>Год:</strong> {{ book.year }}</p>
-<p><strong>Издательство:</strong> {{ book.publisher }}</p>
-<p><strong>Жанры:</strong>
-    {% for genre in book.genres %}
-        <span class="badge bg-secondary">{{ genre.name }}</span>
-    {% endfor %}
-</p>
-<p><strong>Описание:</strong></p>
-<div class="markdown-body">{{ book.description | safe }}</div>
-<p><strong>Страниц:</strong> {{ book.pages }}</p>
+<h2>{{ book.title }}</h2>
 
-{% if book.cover %}
-    <img src="{{ url_for('static', filename='covers/' ~ 'cover_' ~ book.cover.id) }}" class="img-fluid my-3" alt="Обложка">
-{% endif %}
-
-<h3>Рецензии</h3>
-{% for review in book.reviews %}
-    <div class="border p-2 mb-2">
-        <p><strong>{{ review.user.get_full_name() }}</strong> — {{ review.rating }}/5</p>
-        <p>{{ review.text | safe }}</p>
-        <small class="text-muted">{{ review.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+<div class="row">
+    <div class="col-md-4">
+        {% if book.cover %}
+            <img src="{{ url_for('static', filename='uploads/cover_' ~ book.cover.id) }}" alt="Обложка" class="img-fluid rounded">
+        {% else %}
+            <div class="text-muted">Обложка отсутствует</div>
+        {% endif %}
     </div>
-{% endfor %}
+    <div class="col-md-8">
+        <p><strong>Автор:</strong> {{ book.author }}</p>
+        <p><strong>Год:</strong> {{ book.year }}</p>
+        <p><strong>Издательство:</strong> {{ book.publisher }}</p>
+        <p><strong>Страниц:</strong> {{ book.pages }}</p>
+        <p><strong>Жанры:</strong> {{ book.genres | map(attribute='name') | join(', ') }}</p>
 
-{% if current_user.is_authenticated and current_user.role.name in ['пользователь', 'модератор', 'администратор'] %}
-    {% set has_reviewed = book.reviews|selectattr('user_id', 'equalto', current_user.id)|list|length > 0 %}
-    {% if not has_reviewed %}
-        <a href="{{ url_for('reviews.add_review', book_id=book.id) }}" class="btn btn-outline-primary">Написать рецензию</a>
-    {% else %}
-        <div class="alert alert-info mt-3">Вы уже оставили рецензию на эту книгу.</div>
-    {% endif %}
+        <p><strong>Описание:</strong></p>
+        <div class="border rounded p-3 bg-light">
+            {{ book.description_html | safe }}
+        </div>
+
+        <p class="mt-3"><strong>Средняя оценка:</strong>
+            {% if book.average_rating() %}
+                {{ book.average_rating() }} ⭐ ({{ book.review_count() }} рецензий)
+            {% else %}
+                Пока нет оценок
+            {% endif %}
+        </p>
+
+        {% if current_user.is_authenticated and current_user.role.name == 'пользователь' %}
+        <button class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#addToCollectionModal">
+            Добавить в подборку
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<hr>
+
+<h4>Рецензии</h4>
+{% if book.reviews %}
+    <ul class="list-group">
+        {% for review in book.reviews %}
+            <li class="list-group-item">
+                <strong>{{ review.user.get_full_name() }}</strong> – <em>{{ review.rating }}⭐</em><br>
+                <div class="mt-1">{{ review.text | safe }}</div>
+                <small class="text-muted">Оставлено: {{ review.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-muted">На эту книгу ещё никто не оставил рецензию.</p>
 {% endif %}
+
+<!-- Модальное окно "Добавить в подборку" -->
+<div class="modal fade" id="addToCollectionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Добавить в подборку</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% if current_user.collections %}
+        <select id="collectionSelect" class="form-select">
+          {% for col in current_user.collections %}
+          <option value="{{ col.id }}">{{ col.name }}</option>
+          {% endfor %}
+        </select>
+        {% else %}
+        <div class="text-muted">У вас пока нет подборок. Создайте одну в разделе «Мои подборки».</div>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        {% if current_user.collections %}
+        <button class="btn btn-primary" onclick="addToCollection({{ book.id }})">Добавить</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function addToCollection(bookId) {
+    const collectionId = document.getElementById("collectionSelect").value;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+
+    fetch(`/collection/${collectionId}/add_book`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            ...(csrfToken && { "X-CSRFToken": csrfToken })
+        },
+        body: `book_id=${bookId}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.message) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.error || "Ошибка при добавлении");
+        }
+    });
+}
+</script>
 {% endblock %}

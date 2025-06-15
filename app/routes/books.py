@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, send_from_directory
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app.models import db, Book, Genre, Cover
 from app.forms import BookForm
 import os, hashlib
+import markdown  # ✅ Для рендеринга Markdown
 
 bp = Blueprint('books', __name__)
 
@@ -16,6 +17,8 @@ def index():
 @bp.route('/book/<int:id>')
 def view(id):
     book = Book.query.get_or_404(id)
+    # ✅ Рендерим Markdown в HTML для описания
+    book.description_html = markdown.markdown(book.description or "")
     return render_template('books/view.html', book=book)
 
 @bp.route('/book/add', methods=['GET', 'POST'])
@@ -27,6 +30,7 @@ def add():
 
     form = BookForm()
     form.genres.choices = [(g.id, g.name) for g in Genre.query.all()]
+    form.submit.label.text = "Добавить книгу"
 
     if form.validate_on_submit():
         try:
@@ -40,9 +44,8 @@ def add():
                 genres=[Genre.query.get(id) for id in form.genres.data]
             )
             db.session.add(book)
-            db.session.flush()  # получаем id книги
+            db.session.flush()  # Нужен ID для обложки
 
-            # загрузка обложки
             file = form.cover.data
             if file:
                 content = file.read()
@@ -59,30 +62,41 @@ def add():
                     )
                     db.session.add(new_cover)
                     db.session.flush()
-                    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"cover_{new_cover.id}")
+
+                    upload_folder = current_app.config['UPLOAD_FOLDER']
+                    os.makedirs(upload_folder, exist_ok=True)
+                    file_path = os.path.join(upload_folder, f"cover_{new_cover.id}")
                     with open(file_path, 'wb') as f:
                         f.write(content)
+
                     book.cover = new_cover
 
             db.session.commit()
             flash("Книга успешно добавлена.", "success")
             return redirect(url_for('books.index'))
+
         except Exception as e:
             db.session.rollback()
-            flash("Ошибка при сохранении книги.", "danger")
+            flash(f"Ошибка при сохранении книги: {str(e)}", "danger")
 
-    return render_template('books/add_edit.html', form=form)
+    else:
+        print("❌ Ошибки валидации формы:", form.errors)
+        flash("Форма содержит ошибки. Проверьте данные.", "danger")
+
+    return render_template('books/add_edit.html', form=form, editing=False)
 
 @bp.route('/book/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit(id):
     book = Book.query.get_or_404(id)
     if current_user.role.name not in ['администратор', 'модератор']:
-        flash("У вас недостаточно прав для выполнения данного действия.", 'danger')
+        flash("У вас недостаточно прав.", 'danger')
         return redirect(url_for('books.index'))
 
     form = BookForm(obj=book)
     form.genres.choices = [(g.id, g.name) for g in Genre.query.all()]
+    form.submit.label.text = "Сохранить изменения"
+
     if request.method == 'GET':
         form.genres.data = [g.id for g in book.genres]
 
@@ -97,11 +111,12 @@ def edit(id):
             book.genres = [Genre.query.get(id) for id in form.genres.data]
 
             db.session.commit()
-            flash("Книга успешно обновлена.", "success")
+            flash("Книга обновлена.", "success")
             return redirect(url_for('books.view', id=book.id))
-        except Exception:
+
+        except Exception as e:
             db.session.rollback()
-            flash("Ошибка при обновлении книги.", "danger")
+            flash(f"Ошибка при обновлении: {str(e)}", "danger")
 
     return render_template('books/add_edit.html', form=form, editing=True)
 
@@ -109,7 +124,7 @@ def edit(id):
 @login_required
 def delete(id):
     if current_user.role.name != 'администратор':
-        flash("У вас недостаточно прав для выполнения данного действия.", 'danger')
+        flash("Нет прав для удаления.", 'danger')
         return redirect(url_for('books.index'))
 
     book = Book.query.get_or_404(id)
@@ -118,7 +133,6 @@ def delete(id):
         db.session.delete(book)
         db.session.commit()
 
-        # если обложка больше не используется — удалить файл и запись
         if cover and not Book.query.filter_by(cover_id=cover.id).first():
             file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"cover_{cover.id}")
             if os.path.exists(file_path):
@@ -126,9 +140,9 @@ def delete(id):
             db.session.delete(cover)
             db.session.commit()
 
-        flash("Книга успешно удалена.", "success")
+        flash("Книга удалена.", "success")
     except Exception as e:
         db.session.rollback()
-        flash("Ошибка при удалении книги.", "danger")
+        flash(f"Ошибка при удалении: {str(e)}", "danger")
 
     return redirect(url_for('books.index'))
