@@ -15,7 +15,6 @@
 
 <button class="btn btn-success mt-3" data-bs-toggle="modal" data-bs-target="#addCollectionModal">Добавить подборку</button>
 
-<!-- Модальное окно -->
 <div class="modal fade" id="addCollectionModal" tabindex="-1" aria-labelledby="addCollectionLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -26,7 +25,6 @@
         </div>
         <div class="modal-body">
           <input type="text" name="name" id="collectionName" class="form-control" placeholder="Введите название">
-          <!-- Скрытое поле CSRF для совместимости -->
           <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}">
         </div>
         <div class="modal-footer">

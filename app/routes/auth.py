@@ -39,7 +39,6 @@ def register():
 
     form = RegisterForm()
 
-    # Все доступные роли
     form.role.choices = [(r.id, r.name.capitalize()) for r in Role.query.order_by(Role.name).all()]
 
     if form.validate_on_submit():

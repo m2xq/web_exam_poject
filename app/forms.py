@@ -38,7 +38,7 @@ class BookForm(FlaskForm):
     genres = SelectMultipleField("Жанры", coerce=int, validators=[
         DataRequired()
     ])
-    cover = FileField("Обложка (необязательно)")  # Только для добавления
+    cover = FileField("Обложка (необязательно)")
     submit = SubmitField("Добавить книгу")
 
 

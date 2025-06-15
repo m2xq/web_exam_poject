@@ -22,10 +22,9 @@ def create_app():
 
     login_manager.login_view = 'auth.login'
 
-    # Регистрация блюпринтов
     from .routes import auth, books, reviews, collections
     app.register_blueprint(auth.bp)
-    app.register_blueprint(books.bp, url_prefix='/')  # ✅ ОБЯЗАТЕЛЬНО ДЛЯ /
+    app.register_blueprint(books.bp, url_prefix='/')
     app.register_blueprint(reviews.bp)
     app.register_blueprint(collections.bp)
 
@@ -33,7 +32,6 @@ def create_app():
         create_initial_data()
 
     return app
-
 
 def create_initial_data():
     from app.models import Role, User, Genre

@@ -15,14 +15,6 @@
   {% endif %}
 {% endwith %}
 
-{# ✅ Показываем отладочную информацию — все ошибки формы #}
-{% if form.errors %}
-  <div class="alert alert-danger">
-    <strong>Ошибки валидации формы:</strong>
-    <pre>{{ form.errors | tojson(indent=2) }}</pre>
-  </div>
-{% endif %}
-
 <form method="POST" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
 
@@ -101,10 +93,9 @@
     </div>
 </form>
 
-<!-- EasyMDE + preview -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
-<script>
+<script>XYZ
 document.addEventListener("DOMContentLoaded", function () {
     const textarea = document.getElementById("description");
     if (textarea) {

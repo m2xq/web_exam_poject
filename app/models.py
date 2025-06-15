@@ -5,13 +5,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import db, login_manager
 
-# Связующая таблица книги <-> жанры
+
 book_genre = db.Table('book_genre',
     db.Column('book_id', db.Integer, db.ForeignKey('book.id', ondelete='CASCADE')),
     db.Column('genre_id', db.Integer, db.ForeignKey('genre.id', ondelete='CASCADE'))
 )
 
-# Связующая таблица книги <-> подборки
 book_collection = db.Table('book_collection',
     db.Column('collection_id', db.Integer, db.ForeignKey('collection.id', ondelete='CASCADE')),
     db.Column('book_id', db.Integer, db.ForeignKey('book.id', ondelete='CASCADE'))

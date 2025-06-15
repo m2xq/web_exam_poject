@@ -4,14 +4,12 @@ from app.models import db, Collection, Book
 
 bp = Blueprint('collections', __name__)
 
-# 📚 Список подборок пользователя
 @bp.route('/collections')
 @login_required
 def list_collections():
     collections = Collection.query.filter_by(user_id=current_user.id).all()
     return render_template('collections/index.html', collections=collections)
 
-# 👁 Просмотр конкретной подборки
 @bp.route('/collection/<int:id>')
 @login_required
 def view_collection(id):
@@ -21,7 +19,6 @@ def view_collection(id):
         return redirect(url_for('collections.list_collections'))
     return render_template('collections/view.html', collection=collection)
 
-# ➕ Добавление новой подборки (через JavaScript)
 @bp.route('/collection/add', methods=['POST'])
 @login_required
 def add_collection():
@@ -43,7 +40,6 @@ def add_collection():
         current_app.logger.error(f"❌ Ошибка при создании подборки: {str(e)}")
         return jsonify({"error": "Ошибка при сохранении"}), 500
 
-# 📚 Добавление книги в подборку (через JavaScript)
 @bp.route('/collection/<int:id>/add_book', methods=['POST'])
 @login_required
 def add_book_to_collection(id):

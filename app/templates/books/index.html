@@ -41,7 +41,6 @@
     {% endfor %}
 </div>
 
-<!-- Пагинация -->
 <nav class="mt-4">
   <ul class="pagination justify-content-center">
     {% if books.has_prev %}
@@ -51,7 +50,7 @@
     {% endif %}
     {% for page_num in books.iter_pages() %}
       {% if page_num %}
-        <li class="page-item {% if page_num == books.page %}active{% endif %}">
+        <li class="page-item {% if page_num == books.page %}active{% endif %}"><!-- Пагинация -->
           <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
         </li>
       {% else %}
@@ -66,7 +65,6 @@
   </ul>
 </nav>
 
-<!-- Модальное окно удаления -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -88,18 +86,16 @@
   </div>
 </div>
 
-<!-- Кнопка "Добавить книгу" -->
 {% if current_user.is_authenticated and current_user.role.name == 'администратор' %}
     <div class="mt-4 text-center">
         <a href="{{ url_for('books.add') }}" class="btn btn-success">Добавить книгу</a>
     </div>
 {% endif %}
 
-<!-- Стили -->
 <style>
 .book-card {
     width: 360px;
-    height: 504px;
+    height: 850px;
     display: flex;
     flex-direction: column;
 }

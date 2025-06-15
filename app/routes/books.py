@@ -58,7 +58,6 @@ def add():
                     db.session.add(new_cover)
                     db.session.flush()
 
-                    # Сохраняем в app/static/uploads
                     upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
                     os.makedirs(upload_folder, exist_ok=True)
                     file_path = os.path.join(upload_folder, f"cover_{new_cover.id}")
@@ -76,9 +75,6 @@ def add():
             current_app.logger.exception("Ошибка при добавлении книги")
             flash(f"Ошибка при сохранении книги: {str(e)}", "danger")
 
-    else:
-        current_app.logger.warning("Форма не прошла валидацию: %s", form.errors)
-        flash("Форма содержит ошибки. Проверьте данные.", "danger")
 
     return render_template('books/add_edit.html', form=form, editing=False)
 
@@ -131,7 +127,6 @@ def delete(id):
         db.session.delete(book)
         db.session.commit()
 
-        # Если обложка больше не используется — удалим и файл, и запись
         if cover and not Book.query.filter_by(cover_id=cover.id).first():
             upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
             file_path = os.path.join(upload_folder, f"cover_{cover.id}")
