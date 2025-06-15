@@ -18,3 +18,15 @@ class BookForm(FlaskForm):
     genres = SelectMultipleField("Жанры", coerce=int)
     cover = FileField("Обложка")
     submit = SubmitField("Сохранить")
+
+class ReviewForm(FlaskForm):
+    rating = SelectField("Оценка", choices=[
+        (5, 'отлично'),
+        (4, 'хорошо'),
+        (3, 'удовлетворительно'),
+        (2, 'неудовлетворительно'),
+        (1, 'плохо'),
+        (0, 'ужасно')
+    ], coerce=int, validators=[DataRequired()])
+    text = TextAreaField("Текст рецензии", validators=[DataRequired()])
+    submit = SubmitField("Сохранить")
