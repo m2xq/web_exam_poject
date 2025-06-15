@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ book.title }}{% endblock %}
+{% block content %}
+<h1>{{ book.title }}</h1>
+<p><strong>Автор:</strong> {{ book.author }}</p>
+<p><strong>Год:</strong> {{ book.year }}</p>
+<p><strong>Издательство:</strong> {{ book.publisher }}</p>
+<p><strong>Жанры:</strong>
+    {% for genre in book.genres %}
+        <span class="badge bg-secondary">{{ genre.name }}</span>
+    {% endfor %}
+</p>
+<p><strong>Описание:</strong></p>
+<div class="markdown-body">{{ book.description | safe }}</div>
+<p><strong>Страниц:</strong> {{ book.pages }}</p>
+
+{% if book.cover %}
+    <img src="{{ url_for('static', filename='covers/' ~ 'cover_' ~ book.cover.id) }}" class="img-fluid my-3" alt="Обложка">
+{% endif %}
+
+<h3>Рецензии</h3>
+{% for review in book.reviews %}
+    <div class="border p-2 mb-2">
+        <p><strong>{{ review.user.get_full_name() }}</strong> — {{ review.rating }}/5</p>
+        <p>{{ review.text | safe }}</p>
+        <small class="text-muted">{{ review.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+    </div>
+{% endfor %}
+
+{% if current_user.is_authenticated and current_user.role.name in ['пользователь', 'модератор', 'администратор'] %}
+    {% set has_reviewed = book.reviews|selectattr('user_id', 'equalto', current_user.id)|list|length > 0 %}
+    {% if not has_reviewed %}
+        <a href="{{ url_for('reviews.add_review', book_id=book.id) }}" class="btn btn-outline-primary">Написать рецензию</a>
+    {% else %}
+        <div class="alert alert-info mt-3">Вы уже оставили рецензию на эту книгу.</div>
+    {% endif %}
+{% endif %}
+{% endblock %}

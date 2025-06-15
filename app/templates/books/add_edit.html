@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Редактировать книгу' if editing else 'Добавить книгу' }}{% endblock %}
+{% block content %}
+<h2>{{ 'Редактировать книгу' if editing else 'Добавить книгу' }}</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+        {{ form.title.label(class="form-label") }}
+        {{ form.title(class="form-control") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.description.label(class="form-label") }}
+        {{ form.description(class="form-control", id="mde") }}
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            {{ form.year.label(class="form-label") }}
+            {{ form.year(class="form-control") }}
+        </div>
+        <div class="col-md-4 mb-3">
+            {{ form.publisher.label(class="form-label") }}
+            {{ form.publisher(class="form-control") }}
+        </div>
+        <div class="col-md-4 mb-3">
+            {{ form.author.label(class="form-label") }}
+            {{ form.author(class="form-control") }}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        {{ form.pages.label(class="form-label") }}
+        {{ form.pages(class="form-control") }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.genres.label(class="form-label") }}
+        {{ form.genres(class="form-select", multiple=true) }}
+    </div>
+
+    {% if not editing %}
+    <div class="mb-3">
+        {{ form.cover.label(class="form-label") }}
+        {{ form.cover(class="form-control") }}
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-success">{{ 'Сохранить изменения' if editing else 'Добавить книгу' }}</button>
+</form>
+
+<script>
+    new EasyMDE({ element: document.getElementById("mde") });
+</script>
+{% endblock %}

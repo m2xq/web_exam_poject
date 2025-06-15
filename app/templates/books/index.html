@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Список книг{% endblock %}
+{% block content %}
+<h1>Список книг</h1>
+
+<div class="row">
+    {% for book in books.items %}
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ book.title }}</h5>
+                <p class="card-text">Автор: {{ book.author }} ({{ book.year }})</p>
+                <p class="card-text">Жанры:
+                    {% for genre in book.genres %}
+                        <span class="badge bg-secondary">{{ genre.name }}</span>
+                    {% endfor %}
+                </p>
+                <p class="card-text">
+                    Средняя оценка: {{ book.average_rating() or 'Нет' }}<br>
+                    Рецензий: {{ book.review_count() }}
+                </p>
+                <a href="{{ url_for('books.view', id=book.id) }}" class="btn btn-primary">Просмотр</a>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.role.name in ['администратор', 'модератор'] %}
+                        <a href="#" class="btn btn-warning">Редактировать</a>
+                    {% endif %}
+                    {% if current_user.role.name == 'администратор' %}
+                          <a href="#" class="btn btn-danger" onclick="confirmDelete({{ book.id }}, '{{ book.title|e }}')">Удалить</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Удаление книги</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Вы уверены, что хотите удалить книгу <strong id="bookTitle"></strong>?
+      </div>
+      <div class="modal-footer">
+        <form id="deleteForm" method="POST">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Нет</button>
+          <button type="submit" class="btn btn-danger">Да</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDelete(bookId, title) {
+    document.getElementById('bookTitle').textContent = title;
+    document.getElementById('deleteForm').action = `/book/${bookId}/delete`;
+    let modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+    modal.show();
+}
+</script>
+
+<nav>
+  <ul class="pagination justify-content-center">
+    {% if books.has_prev %}
+      <li class="page-item"><a class="page-link" href="?page={{ books.prev_num }}">Назад</a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Назад</span></li>
+    {% endif %}
+    {% for page_num in books.iter_pages() %}
+      {% if page_num %}
+        <li class="page-item {% if page_num == books.page %}active{% endif %}"><a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    {% if books.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ books.next_num }}">Вперёд</a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Вперёд</span></li>
+    {% endif %}
+  </ul>
+</nav>
+
+{% if current_user.is_authenticated and current_user.role.name == 'администратор' %}
+    <a href="{{ url_for('books.add') }}" class="btn btn-success">Добавить книгу</a>
+{% endif %}
+{% endblock %}

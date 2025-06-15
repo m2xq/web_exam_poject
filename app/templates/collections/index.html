@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Мои подборки{% endblock %}
+{% block content %}
+<h2>Мои подборки</h2>
+
+<ul class="list-group">
+    {% for collection in collections %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ collection.name }}
+            <a href="{{ url_for('collections.view_collection', id=collection.id) }}" class="btn btn-sm btn-outline-primary">Просмотр</a>
+        </li>
+    {% endfor %}
+</ul>
+
+<button class="btn btn-success mt-3" data-bs-toggle="modal" data-bs-target="#addCollectionModal">Добавить подборку</button>
+
+<!-- Модальное окно добавления подборки -->
+<div class="modal fade" id="addCollectionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Новая подборка</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="collectionName" class="form-control" placeholder="Введите название">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" onclick="createCollection()">Добавить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function createCollection() {
+    const name = document.getElementById('collectionName').value;
+    fetch("{{ url_for('collections.add_collection') }}", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `name=${encodeURIComponent(name)}`
+    }).then(resp => resp.json()).then(data => {
+        if (data.message) window.location.reload();
+        else alert(data.error);
+    });
+}
+</script>
+{% endblock %}

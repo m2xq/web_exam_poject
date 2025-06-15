@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Подборка: {{ collection.name }}{% endblock %}
+{% block content %}
+<h2>Подборка: {{ collection.name }}</h2>
+
+<ul class="list-group">
+    {% for book in collection.books %}
+        <li class="list-group-item">
+            <a href="{{ url_for('books.view', id=book.id) }}">{{ book.title }}</a>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}
