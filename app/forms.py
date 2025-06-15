@@ -56,3 +56,12 @@ class ReviewForm(FlaskForm):
     ])
     submit = SubmitField("Сохранить")
 
+
+class RegisterForm(FlaskForm):
+    login = StringField("Логин", validators=[DataRequired(), Length(min=3, max=64)])
+    password = PasswordField("Пароль", validators=[DataRequired()])
+    last_name = StringField("Фамилия", validators=[DataRequired()])
+    first_name = StringField("Имя", validators=[DataRequired()])
+    middle_name = StringField("Отчество (необязательно)")
+    role = SelectField("Роль", coerce=int)
+    submit = SubmitField("Зарегистрироваться")
